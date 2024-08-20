@@ -5,6 +5,8 @@ import {
 	type FormDataPostHeaders,
 	type FormDataRequestOptions,
 } from "@lukso/data-provider-base";
+import fs from 'fs';
+import path from 'path';
 
 export interface SenseUploadedResult {
   request_id: string;
@@ -101,9 +103,37 @@ export class SenseUploader extends BaseFormDataUploader {
 		return null;
 	}
 
+	/**
+	 * Uploads images of folder to Sense Protocol and return result ids and ipfs links.
+	 *
+	 * @param folder - folder to upload
+	 * @param meta - optional metadata to send with the upload
+	 * @returns array of file name, result id and ipfs URL of uploaded images of folder
+	 * @internal
+	 */
+	async uploadFolderToSense(
+		folder: string,
+		_meta?: FormDataPostHeaders,
+	): Promise<any> {
+		const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp'];
+		const files = fs.readdirSync(folder);
+		const imageFiles = files.filter(file => 
+			imageExtensions.includes(path.extname(file).toLowerCase())
+		);
+		
+		const results = [];
+		for (const imageFile of imageFiles) {
+			const result = await this.uploadToSense(fs.createReadStream(path.join(folder, imageFile)), _meta);
+			results.push({
+				file_name: imageFile,
+				...(result ?? {})
+			});
+		}
+		return results;
+	}
 
 	/**
-	 * Check status of cascade activation transaction at Pastel Network
+	 * Check status of sense activation transaction at Pastel Network
 	 *
 	 * @param result_id - result id of target file
 	 * @returns transaction status and activiation ticket id

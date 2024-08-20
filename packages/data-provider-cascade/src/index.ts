@@ -5,6 +5,8 @@ import {
 	type FormDataPostHeaders,
 	type FormDataRequestOptions,
 } from "@lukso/data-provider-base";
+import fs from 'fs';
+import path from 'path';
 
 export interface CascadeUploadedResult {
   request_id: string;
@@ -101,6 +103,34 @@ export class CascadeUploader extends BaseFormDataUploader {
 		return null;
 	}
 
+	/**
+	 * Uploads images of folder to Cascade Protocol and return result ids and ipfs links.
+	 *
+	 * @param folder - folder to upload
+	 * @param meta - optional metadata to send with the upload
+	 * @returns array of file name, result id and ipfs URL of uploaded images of folder
+	 * @internal
+	 */
+	async uploadFolderToCascade(
+		folder: string,
+		_meta?: FormDataPostHeaders,
+	): Promise<any> {
+		const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp'];
+		const files = fs.readdirSync(folder);
+		const imageFiles = files.filter(file => 
+			imageExtensions.includes(path.extname(file).toLowerCase())
+		);
+		
+		const results = [];
+		for (const imageFile of imageFiles) {
+			const result = await this.uploadToCascade(fs.createReadStream(path.join(folder, imageFile)), _meta)
+			results.push({
+				file_name: imageFile,
+				...(result ?? {})
+			});
+		}
+		return results;
+	}
 
 	/**
 	 * Check status of cascade activation transaction at Pastel Network

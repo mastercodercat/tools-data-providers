@@ -19,3 +19,16 @@ if (result) {
   const status = await provider.retrieveTxId(result.result_id);
   console.log(status); // { status: "PENDING" or "SUCCESS", tx_id: activation_transaction_id }
 }
+
+// upload folder
+const results = await provider.uploadFolderToCascade("./examples");
+
+if (results.length > 0) {
+  for (const result of results) {
+    if (result) {
+      console.log("File Name:", result.file_name);
+      console.log("IPFS Url:", result.ipfs_url);
+      console.log("Result Id:", result.result_id);
+    }
+  }
+}
